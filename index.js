@@ -17,6 +17,7 @@ if(configResolvers[0] === ""){
 var fileRegex = /^file:\/\/(.*)/;
 var httpRegex = /^https?:\/\/(.*)/;
 var objectRegex = /^object:\/\/(.*)/;
+var environmentRegex = /^env:\/\/(.*)/;
 
 var resolvers = configResolvers.map((val) => {
   var resolverEnvValue = config1.getNamedValue(val);
@@ -35,7 +36,7 @@ var resolvers = configResolvers.map((val) => {
       raw:val,
       value: httpRegex.exec(resolverEnvValue)[0],
       resolverName: val,
-      headers: config1.getNamedValue(val + "_HEADER") || undefined,
+      headers: config1.getNamedValue(val + "_HEADERS") ? JSON.parse(config1.getNamedValue(val + "_HEADER"))  : undefined,
       interval: parseInt(config1.getNamedValue(val + "_INTERVAL")) || undefined,
       type:"http"
     }
@@ -46,6 +47,14 @@ var resolvers = configResolvers.map((val) => {
       resolverName: val,
       interval: parseInt(config1.getNamedValue(val + "_INTERVAL")) || undefined,
       type:"object"
+    }
+  } else if(environmentRegex.test(resolverEnvValue)){
+    return {
+      raw:val,
+      value: "",
+      resolverName: val,
+      interval: parseInt(config1.getNamedValue(val + "_INTERVAL")) || undefined,
+      type:"environment"
     }
   } else {
       throw new Error("Resolver not formated: " + val)
@@ -63,6 +72,8 @@ for(var resolver of resolvers){
       break;
     case "file": config2.usingFile(resolver.value, resolver.interval);
       break;
+    case "environment": config2.usingEnvironmentVars(resolver.interval);
+      break;
   }
 }
 
@@ -73,4 +84,5 @@ module.exports = config2;
 config2.ready.then(() => {
   console.log(config2.getNamedValue("bob"));
   console.log(config2.getNamedValue("ip"));
+  console.log(config2.getNamedValue("version"));
 })*/
